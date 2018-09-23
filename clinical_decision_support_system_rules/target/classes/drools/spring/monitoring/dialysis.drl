@@ -1,0 +1,28 @@
+import ftn.uns.ac.rs.util.*;
+import ftn.uns.ac.rs.domain.entity.Patient;
+import ftn.uns.ac.rs.domain.entity.MedicalExamination;
+
+
+rule "Hitno potrebna dijaliza"
+    when
+   	 	Patient($id: id, $examinations: examinations)
+		
+		MedicalExamination(
+			illness.name == "Hronicna bubrezna bolest"
+		) from $examinations
+    
+       Number(intValue >= 10) from accumulate(
+            $event: HeartBeatEvent($id == patientId)
+            over window:time(10s),
+            count($event)
+        )
+        
+        Number(intValue < 100) from accumulate(
+            $event: UrinationEvent($amountOfUrination: amountOfUrination) 
+            over window:time(12h),
+            sum($amountOfUrination)
+        )
+    then
+    	drools.halt();
+    
+end

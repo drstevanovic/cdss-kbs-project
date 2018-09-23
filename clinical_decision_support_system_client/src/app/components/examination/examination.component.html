@@ -1,0 +1,167 @@
+<app-navbar></app-navbar>
+<div class="rec">
+  <div align="center" style="margin: 0 5% 0 5% ;color:white">
+    <h2><i>Examination</i></h2>
+  </div>
+  <br>
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#choosePatient"><i>Choose patient</i></a>
+    </li>
+    <li class="nav-item">
+      <a [ngClass]="(!patientChoosen) ? 'nav-link disabled no-hand': 'nav-link'"
+         id="check"  data-toggle="tab" href="#checkDiagnose"><i>Check diagnose</i></a>
+    </li>
+    <li class="nav-item">
+      <a [ngClass]="(!patientChoosen) ? 'nav-link disabled no-hand': 'nav-link'"
+         class="nav-link" data-toggle="tab" href="#diagnose"><i>Diagnose</i></a>
+    </li>
+    <li class="nav-item">
+      <a [ngClass]="(!patientChoosen && finalIllness === '') ? 'nav-link disabled no-hand': 'nav-link'"
+         class="nav-link" data-toggle="tab" href="#medicines1"><i>Medicines</i></a>
+    </li>
+  </ul>
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <div  id="choosePatient" class="container tab-pane active panel"><br>
+      <div  class="form-inline" >
+        <ng-select style="width: 70%; margin-right: 2%;" [items]="patients"
+                   bindLabel="jmbg"
+                   [searchFn]="customSearchFn"
+                   [(ngModel)]="patient"
+                   [loading]="loading">
+        <ng-template ng-option-tmp let-item="item">
+            {{item.firstName + ' ' + item.lastName}}<br />
+            <small>{{item.jmbg}}</small>
+          </ng-template>
+        </ng-select>
+        <button class="btn btn-info form-inline" (click)="checkForPatient();" [disabled]="patient == undefined"
+                data-toggle="tooltip" data-placement="bottom" title="Add examination">Choose patient <i
+          class="fa fa-plus"></i></button>
+      </div>
+    </div>
+
+    <div id="checkDiagnose" class="container tab-pane fade panel"><br>
+      <p style="color: dimgrey;"><i>Select a way for suggesting a disease: </i></p>
+
+      <select class="form-control" (change)="onEditClick($event.target.value)">
+        <option></option>
+        <option>Show disease with the highest priority</option>
+        <option>Show all disease for symptoms</option>
+        <option>Show all symptoms for disease</option>
+      </select>
+      <div align="center">
+        <div *ngIf="showForPriority || showInputDisease">
+          <div style="margin-bottom: 25px" class="form-group">
+            <label>Choose symptoms: </label>
+            <input id="chooseSymptom" type="text" class="form-control" name="symptom"
+                   (click)="click$.next($event.target.value)"
+                   [(ngModel)]="selectedSymptom" #instance="ngbTypeahead" [ngbTypeahead]="searchSymptoms"/>
+            <input id="clickAdd" type="button" class="btn btn-sq-xs btn-info"
+                   [disabled]="selectedSymptom === '' || !valid()" (click)="addSymptom()"
+                   value="Click to add symptom">
+          </div>
+          <label *ngIf="addedSymptoms.length != 0">Added Symptoms: </label>
+          <div style="margin-left: 5px; display: inline-block" class="form-group" *ngFor="let symptom of addedSymptoms">
+            <label id="addedSymptom">{{symptom}}</label>
+            <button id="deleteSymptom" (click)="deleteSymptom(symptom)">X</button>
+          </div>
+        </div>
+        <br/>
+        <div align="center" *ngIf="showForPriority">
+          <button class="btn btn-info" (click)="startWithPriority()" [disabled]="addedSymptoms.length == 0">
+            Find by priority <i class="fa fa-search"></i></button>
+        </div>
+
+        <div *ngIf="highestDisease !== '' && showForPriority">
+          <button type="button" style="margin-top: 2%" class="list-group-item list-group-item-danger"
+                  data-toggle="tooltip">{{highestDisease}}
+          </button>
+        </div>
+        <!-- ***************************************************************************** -->
+
+          <div *ngIf="showInputDisease">
+            <button class="btn btn-info" (click)="showAllDesease()" [disabled]="addedSymptoms.length == 0"
+                    data-toggle="tooltip">Find one or more diseases by symptoms <i
+              class="fa fa-search"></i></button>
+          </div>
+
+
+
+
+        <!-- ***************************************************************************** -->
+         <input *ngIf="showInputSymptos" type="text" class="form-control" name="symptom"
+                   (click)="click$.next($event.target.value)"
+                   [(ngModel)]="illnessForSearch" #instance="ngbTypeahead" [ngbTypeahead]="searchIllness"/>
+
+          <div *ngIf="showInputSymptos">
+            <button style="margin-top:1%" class="btn btn-info" (click)="showAllSymptoms()"
+                    data-toggle="tooltip">Show all symptoms for disease <i
+              class="fa fa-search"></i></button>
+          </div>
+
+
+           <div  *ngIf="(showInputDisease || showInputSymptos) && sortedDiseases.length !== 0" align="center" style="overflow-y: scroll; margin-top: 2%">
+          <table class="table" style="margin-top: 4%">
+            <tr class="table-info">
+              <td *ngIf="showInputDisease" scope="col">Disease</td>
+              <td *ngIf="showInputSymptos" scope="col">Symptom</td>
+              <td *ngIf="showInputDisease" scope="col">Numer of satisfied symptoms</td>
+              <td *ngIf="showInputSymptos" scope="col">Specific symptom</td>
+              <td>&nbsp;</td>
+            </tr>
+            <tr *ngFor="let i of sortedDiseases">
+              <td scope="row"><strong>{{i['key']}}</strong></td>
+              <td><strong>{{i['value']}}</strong></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+
+    </div>
+    <div id="diagnose" class="container tab-pane fade panel"><br>
+      <p style="color: dimgrey;"><i>Choose disease</i></p>
+      <input type="text" class="form-control" name="symptom"
+             (click)="click$.next($event.target.value)"
+             placeholder="Choose final disease" style="margin-top: 10%"
+             [(ngModel)]="finalIllness" #instance="ngbTypeahead" [ngbTypeahead]="searchIllness"/>
+
+    </div>
+    <div id="medicines1" class="container tab-pane fade panel"><br>
+      <p style="color: dimgrey;"><i>Choose medicines</i></p>
+      <ng-select [items]="medicines"
+                 bindLabel="name"
+                 groupBy="medicineType"
+                 [multiple]="true"
+                 [(ngModel)]="selectedMedicines"
+                 placeholder="type to choose medicines..">
+        <ng-template ng-optgroup-tmp let-item="item">
+          {{item.name}}<br />
+        </ng-template>
+      </ng-select>
+
+      <div align="center">
+
+      </div>
+
+      <div *ngFor="let medicine of allergic;" align="center">
+        <button class="btn btn-danger" type="button" style="margin-top: 2%"
+                data-toggle="tooltip"><i>{{medicine['key'] + ' ' + medicine['value']}}</i>
+        </button>
+      </div>
+
+      <div style="margin-top: 5%" align="center">
+        <button style="margin-right: 5%" class="btn btn-info" (click)="validateMedicines()"
+                data-toggle="tooltip">Validate medicines <i
+          class="fa fa-question"></i></button>
+        <button class="btn btn-success" (click)="addExamination()"
+                data-toggle="tooltip" data-placement="bottom" title="Add examination" [disabled]="finalIllness === ''">Finish examination<i
+          class="fa fa-check"></i></button>
+
+      </div>
+    </div>
+  </div>
+</div>
+

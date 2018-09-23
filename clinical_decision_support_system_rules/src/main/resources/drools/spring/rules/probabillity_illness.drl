@@ -1,0 +1,259 @@
+package drools.spring.rules;
+import ftn.uns.ac.rs.domain.dto.PatientsSymptoms;
+import ftn.uns.ac.rs.domain.entity.Illness;
+import ftn.uns.ac.rs.domain.entity.IllnessSymptom;
+import ftn.uns.ac.rs.domain.entity.MedicalExamination;
+
+
+rule "Prehlada"
+	salience $total.doubleValue() / $illnessSymptoms.size() * 100
+	agenda-group "probability_illness"
+    when
+        PatientsSymptoms($patientSymptoms: symptoms)
+        $illness: Illness(name == "Prehlada", $illnessSymptoms: symptoms)
+        $total: Number(intValue >= 4) from accumulate(
+        	
+            $i : IllnessSymptom(
+               symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+    then
+        System.out.println( $total.doubleValue() / $illnessSymptoms.size());
+end
+
+rule "Groznica"
+	salience $total.doubleValue() / $illnessSymptoms.size() *100
+	agenda-group "probability_illness"
+	
+    when
+        PatientsSymptoms($patientSymptoms: symptoms)
+        $illness: Illness(name == "Groznica", $illnessSymptoms: symptoms)
+        
+        $total: Number(intValue >= 4) from accumulate(
+        	
+            $i : IllnessSymptom(
+               symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+    then
+        System.out.println( $total.doubleValue() / $illnessSymptoms.size());
+end
+
+rule "Upala krajnika"
+	salience $total.doubleValue() / $illnessSymptoms.size() *100
+	agenda-group "probability_illness"
+	
+    when
+        PatientsSymptoms($patientSymptoms: symptoms)
+        $illness: Illness(name == "Upala krajnika", $illnessSymptoms: symptoms)
+        
+        $total: Number(intValue >= 4) from accumulate(
+        	
+            $i : IllnessSymptom(
+               symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+    then
+        System.out.println( $total.doubleValue() / $illnessSymptoms.size());
+end
+
+rule "Sinusna infekcija"
+	salience (($total.doubleValue() +
+	 $existExamination.doubleValue() / ($existExamination.doubleValue() +0.001 )) / $illnessSymptoms.size() * 100)
+	agenda-group "probability_illness"
+	
+    when
+        PatientsSymptoms($patientSymptoms: symptoms,$patient: patient, $currentDate : currentDate)
+
+        $illness: Illness(name == "Sinusna infekcija", $illnessSymptoms: symptoms)
+        
+        $existExamination : Number() from accumulate(
+    		$examination: MedicalExamination(
+    			illness.name == "Groznica" || illness.name == "Prehlada",
+    			this meets [60d] $currentDate
+    		) from $patient.examinations,
+        	count($examination)
+    	) 
+    	
+      	$total: Number(
+      	($existExamination == 0 && intValue >= 4) || ($existExamination > 0 && intValue >= 3)
+      	 )
+      	from accumulate(
+            $i : IllnessSymptom(
+            	ordinary == true,
+            	 symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+    then
+               System.out.println($existExamination);
+               System.out.println($total);
+               System.out.println((($existExamination.doubleValue() + 0.001)
+      		 / ($existExamination.doubleValue() +0.001) ));
+end
+
+
+
+rule "Hipertenzija"
+	salience   100
+	agenda-group "probability_illness"
+
+    when
+        PatientsSymptoms($patientSymptoms: symptoms)
+        $illness: Illness(name == "Hipertenzija", $illnessSymptoms: symptoms)
+
+        $total: Number(intValue ==  $illnessSymptoms.size()) from accumulate(
+
+            $i : IllnessSymptom(
+               symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+
+
+    then
+        System.out.println($total);
+
+end
+
+rule "Dijabetes"
+	salience $total.doubleValue() / $illnessSymptoms.size() *100
+	agenda-group "probability_illness"
+	
+    when
+        PatientsSymptoms($patientSymptoms: symptoms)
+        $illness: Illness(name == "Dijabetes", $illnessSymptoms: symptoms)
+        
+        $total: Number(intValue ==  $illnessSymptoms.size()) from accumulate(
+        	
+            $i : IllnessSymptom(
+               symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+
+
+    then
+        System.out.println( $total.doubleValue() / $illnessSymptoms.size());
+        
+end
+
+rule "Hronična bubrežna bolest"
+	salience  (
+	($total.doubleValue() +
+		 ($existHipertenzija.doubleValue() / ($existHipertenzija.doubleValue() + 0.001 )) +
+		 ($existDijabetes.doubleValue() / ($existDijabetes.doubleValue() + 0.001 ))		 
+		 )
+		  / $illnessSymptoms.size() 
+	  * 100)
+	
+	agenda-group "probability_illness"
+	
+    when
+        PatientsSymptoms($patientSymptoms: symptoms,$patient: patient, $currentDate : currentDate)
+
+        $illness: Illness(name == "Hronična bubrežna bolest", $illnessSymptoms: symptoms)
+        
+        $existHipertenzija : Number() from accumulate(
+        	
+    		$examination: MedicalExamination(
+    			illness.name == "Hipertenzija",
+    			this before [180d] $currentDate
+    		) from $patient.examinations,
+        	count($examination)
+    	) 
+    	
+    	
+        $existDijabetes : Number(
+        ($existHipertenzija == 0 && intValue >= 1) || ($existHipertenzija > 0 && intValue >= 0)
+         )
+        from accumulate(
+        	
+    		$examination: MedicalExamination(
+    			illness.name == "Dijabetes"
+    		) from $patient.examinations,
+        	count($examination)
+    	) 
+    	
+      	$total: Number(intValue >= 2) from accumulate(
+        	
+            $i : IllnessSymptom(
+            	ordinary == true,
+            	symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+                   
+      
+    then
+       System.out.println("dijabetesa: " + $existDijabetes);
+       System.out.println("hipertenzija: " + $existHipertenzija);
+       System.out.println("izvrseno: " + ($total.doubleValue() +
+		 ($existHipertenzija.doubleValue() / ($existHipertenzija.doubleValue() + 0.001 )) +
+		 ($existDijabetes.doubleValue() / ($existDijabetes.doubleValue() + 0.001 ))		 
+		));
+end
+
+rule "Akutna bubrežna povreda"
+    salience  (
+	($total.doubleValue() +
+		 ($existTemp.doubleValue() / ($existTemp.doubleValue() + 0.001 )) +
+		 ($existMedicine.doubleValue() / ($existMedicine.doubleValue() + 0.001 ))		 
+		 )
+		  / $illnessSymptoms.size() 
+	  * 100)
+    agenda-group "probability_illness"
+    
+    when
+        PatientsSymptoms($patientSymptoms: symptoms,$patient: patient, $currentDate : currentDate)
+
+        $illness: Illness(name == "Akutna bubrežna povreda", $illnessSymptoms: symptoms)
+        
+        $existTemp : Number() from accumulate(
+            
+            $examination: MedicalExamination(
+				this meets [14d] $currentDate ,
+                $s: /illness/symptoms/symptom{name contains "Temperatura"}
+                                
+            ) from $patient.examinations,
+            count($examination)
+        ) 
+        
+        $existMedicine : Number(($existTemp == 0 && intValue >= 1)
+         || ($existTemp > 0 && intValue >= 0)) 
+         from accumulate(
+        	
+    		$examination: MedicalExamination(
+    			$m : /medicines{medicineType == MedicineType.ANTIBIOTIC},
+    			this meets [21d] $currentDate
+    		) from $patient.examinations,
+        	count($examination)
+    	) 
+        
+        
+        
+        $total: Number(intValue >= 2) from accumulate(
+            $i : IllnessSymptom(
+				ordinary == true || (ordinary == false && symptom.name == "Oporavlja se od operacije"),
+                symptom.name memberOf $patientSymptoms
+            ) from $illnessSymptoms,
+            count($i)
+        )
+                   
+      
+    then
+    	System.out.println("temperature: " +$existTemp);
+    	System.out.println("antibiotik: " +$existMedicine);
+    	System.out.println("other: " +($total.doubleValue() +
+		 ($existTemp.doubleValue() / ($existTemp.doubleValue() + 0.001 )) +
+		 ($existMedicine.doubleValue() / ($existMedicine.doubleValue() + 0.001 ))	 
+		 ));
+       
+end
+
+
+
+

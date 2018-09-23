@@ -1,0 +1,21 @@
+.rec {
+  width: 70%;
+  background: rgba(132, 188, 237, 0.35);
+  margin-left: 15%;
+  margin-top: 3%;
+  padding-bottom: 10%;
+}
+
+.panel {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  padding-top: 20px;
+  padding-bottom: 5%;
+  align: center;
+}
+
+select{
+  margin-left: 20%;
+  margin-top: 30px;
+  width: 60%;
+}

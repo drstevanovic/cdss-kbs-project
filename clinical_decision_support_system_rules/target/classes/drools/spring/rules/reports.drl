@@ -1,0 +1,137 @@
+package drools.spring.rules;
+import ftn.uns.ac.rs.domain.entity.Patient;
+import ftn.uns.ac.rs.domain.entity.MedicalExamination;
+import java.util.*;
+
+query getChronicPatients(long DAY_IN_MS)
+	  $p: Patient($examinations: examinations, $jmbg: jmbg)
+	  
+	  $e1: MedicalExamination(
+	  		$illness: illness,
+	  		eval(date.after(new Date(System.currentTimeMillis() - (730 * DAY_IN_MS)))) 
+	  ) from $examinations
+	  
+      chronic: Map() from accumulate(
+           $e2: MedicalExamination(
+           	 $illness.name != "Prehlada",
+           	 $illness.name != "Groznica",
+           	 $illness.name == illness.name,
+             eval(date.after(new Date(System.currentTimeMillis() - (730 * DAY_IN_MS)))) 
+          ) from $examinations,
+          
+          	init(Map mapa = new HashMap();),
+			action(
+			if (mapa.get($p) == null) 
+			 	mapa.put($p,1);
+			 else {
+				mapa.put($p, ((Integer)mapa.get($p))+1);
+			})  
+			result(mapa)
+      )     
+
+
+          Map.Entry(value >= 5, $key: key) from chronic.entrySet
+          chronicPatients: Patient(this == $key)
+end
+
+query getAddictPatients(long DAY_IN_MS)
+    $p: Patient($examinations: examinations)
+
+    //	barem 6 pregleda sa analgeticima
+	Number(intValue>=6) from accumulate(
+	    $e1:MedicalExamination(
+	  	    $m : /medicines{medicineType == MedicineType.ANALGESIC},
+	  	    eval(date.after(new Date(System.currentTimeMillis() - (180 * DAY_IN_MS))))
+	  	) from $examinations,
+	  	count($e1)
+	)
+
+	$e:MedicalExamination(
+	  	$doctor1: doctor,
+	  	$m : /medicines{medicineType == MedicineType.ANALGESIC},
+	  	eval(date.after(new Date(System.currentTimeMillis() - (180 * DAY_IN_MS))))
+    ) from $examinations
+
+    $e2: MedicalExamination(
+	    $doctor2: doctor,
+        $m : /medicines{medicineType == MedicineType.ANALGESIC},
+        eval(date.after(new Date(System.currentTimeMillis() - (180 * DAY_IN_MS))))
+    ) from $e
+
+    addict: Map() from accumulate(
+
+        $e3: MedicalExamination(
+            $m : /doctor{username != $doctor1.username && username != $doctor2.username}
+
+        ) from $e2,
+
+        init(Map mapa = new HashMap();),
+        action(
+        if (mapa.get($p) == null)
+            mapa.put($p, ((Integer)mapa.get($p))+1);
+        else {
+            mapa.put($p,1);
+        })
+        result(mapa)
+    )
+
+    Map.Entry(value >= 0, $key: key) from addict.entrySet
+    addictPatients: Patient(this == $key)
+end
+
+query getAntibioticsForDiffIllness(long DAY_IN_MS)
+    $p: Patient($examinations: examinations, $jmbg: jmbg)
+    Number(intValue>=10) from accumulate (
+        $e1: MedicalExamination(
+            $illness: illness,
+            eval(date.after(new Date(System.currentTimeMillis() - (365 * DAY_IN_MS)))),
+            $m : /medicines{medicineType == MedicineType.ANTIBIOTIC}
+
+	  ) from $examinations,
+count($e1)
+)
+
+	  	$e1: MedicalExamination(
+	  				$illness: illness,
+	                eval(date.after(new Date(System.currentTimeMillis() - (365 * DAY_IN_MS)))),
+	                $m : /medicines{medicineType == MedicineType.ANTIBIOTIC}
+	                 
+	  ) from $examinations
+
+      withAntibiotics: Map() from accumulate(
+           $e2: MedicalExamination(
+           	 $illness.name != illness.name
+           	
+          ) from $e1,
+                        
+          	init(Map mapa = new HashMap();),
+			action(
+			if (mapa.get($p) == null) 
+			 	mapa.put($p,1);
+			 else {
+				mapa.put($p, ((Integer)mapa.get($p))+1);
+			})  
+			result(mapa)
+      )     
+      	
+       
+          Map.Entry(value >= 0, $key: key) from withAntibiotics.entrySet
+          chronicPatients: Patient(this == $key)   
+end
+
+query getPatientsWithAllAntibiotics(long DAY_IN_MS)
+	  $p: Patient($examinations: examinations, $jmbg: jmbg)
+      patients: Set() from accumulate(
+            MedicalExamination(
+	             eval(date.after(new Date(System.currentTimeMillis() - (365 * DAY_IN_MS)))),
+	             $m : /medicines{medicineType != MedicineType.ANTIBIOTIC}
+	              
+	             			
+            )from $examinations,
+           
+          	init(Set lista = new HashSet();),
+			action(lista.add($p);), 
+			result(lista)
+      )     
+end
+

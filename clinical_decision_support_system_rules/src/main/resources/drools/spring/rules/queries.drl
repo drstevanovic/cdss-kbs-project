@@ -1,0 +1,57 @@
+
+import ftn.uns.ac.rs.domain.entity.*;
+import ftn.uns.ac.rs.domain.dto.PatientsSymptoms;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+query getSymptomsForIllness(String nameOfIllness)
+
+
+	foundSymptoms: List() from accumulate(
+		Illness($illnessSymptoms: symptoms, name == nameOfIllness),
+	
+		init(List lista = new ArrayList();),
+		action(lista.addAll($illnessSymptoms);),
+		result(lista)
+
+	)
+end
+
+query getIllnessForSymptoms (List searchSymptoms)
+	
+	$i : Illness($illnessSymptoms: symptoms, $name: name)
+	
+	foundIllnesses: Map() from accumulate(
+		
+		IllnessSymptom(
+			searchSymptoms contains symptom.name
+		) from $illnessSymptoms,
+		init(Map mapa = new HashMap();),
+		action(
+			 if (mapa.get($name) == null) 
+			 	mapa.put($name,1);
+			 else {
+				mapa.put($name, ((Integer)mapa.get($name))+1);
+			})
+		result(mapa)
+	)
+
+
+end
+
+query checkIfAllergic(List medicines, List allergicIngredients)
+	
+	$i: String() from allergicIngredients
+	foundIngredients: List() from accumulate(
+		$m: Medicine(ingredients contains $i)
+		from medicines,
+	
+		init(List lista = new ArrayList();),
+		action(lista.add($i);),
+		result(lista)
+
+	)
+end
+

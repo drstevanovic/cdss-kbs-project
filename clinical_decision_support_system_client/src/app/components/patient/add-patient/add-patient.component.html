@@ -1,0 +1,43 @@
+<app-navbar></app-navbar>
+<div class="rec">
+<form  id="forma">
+  <h3 id="reg_title" class="jumbotron"><i style="color: dimgrey">New patient</i></h3>
+
+  <div  class="form-inline" style="margin-top: 10%;margin-left: 10%">
+    <label for="first_name">First name: </label>
+    <input type="text" class="form-control" name="first_name" id="first_name" [(ngModel)]="patient.firstName" required
+           style="width: 40%;margin-left: 9%"/>
+  </div>
+
+  <div style="margin-left: 10%" class="form-inline">
+    <label for="last_name">Last name: </label>
+    <input type="text" class="form-control" name="last_name" id="last_name" [(ngModel)]="patient.lastName" required
+           style="width:40%;margin-left: 9%"/>
+  </div>
+  <div style="margin-left: 10%" class="form-inline">
+    <label for="email">JMBG: </label>
+    <input type="email" class="form-control" name="email" id="email" [(ngModel)]="patient.jmbg" required
+           style="width: 40%;margin-left: 13%"/>
+  </div>
+  <div *ngIf="patient.jmbg!='' && patient.jmbg.length!=13" style="margin-left: 10%" class="form-inline">
+    <label style="color:red">JMBG must have 13 characters.</label>
+  </div>
+  <div style="margin-left: 10%"  class="form-inline">
+    <label for="username">Allergens: </label>
+    <input type="text" class="form-control" name="username" id="username" [(ngModel)]="ingredient" required
+           style="width:40%;margin-left: 9%"/>
+    <input type="submit" class="btn btn-info form-control" (click)="addIngredient(); " value="+"
+           style="float: right;margin-left: 2%">
+  </div>
+  <div class="d-inline-block" style="margin-left: 5%" *ngFor="let ii of ingredients">
+    <div > <button style="margin-left: 1%" class="btn btn-info">{{ii+' '}}</button>
+    </div>
+  </div>
+
+  <div style="margin-top: 10%">
+
+    <input type="submit" class="btn btn-dark" [disabled]="patient.jmbg.length!==13" (click)="registerUser(); " value="Submit"
+           style="float: right;margin:3% 5% 10% 0">
+  </div>
+</form>
+</div>

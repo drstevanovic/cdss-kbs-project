@@ -1,0 +1,19 @@
+import ftn.uns.ac.rs.util.OxygenEvent;
+import ftn.uns.ac.rs.domain.entity.Patient;
+
+
+rule "Problemi sa kiseonikom"
+    when
+   	 	Patient($id: id)
+    
+        not(
+            OxygenEvent($id == patientId) 
+            over window:time(15m)
+            
+        ) 
+        OxygenEvent($id == patientId, oxygenLevel < 70)
+        
+    then
+        drools.halt();
+    
+end

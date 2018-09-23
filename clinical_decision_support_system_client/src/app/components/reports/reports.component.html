@@ -1,0 +1,36 @@
+<app-navbar></app-navbar>
+<div class="rec" style="align: center;">
+  <div align="center" class="panel"><h3 ><i style="color:dimgrey;">Reports</i></h3></div>
+
+
+  <select class="form-control"  (change)="onEditClick($event.target.value)">
+    <option></option>
+    <option>Show potential chronic patients</option>
+    <option>Show potential addict patients</option>
+    <option>Show patients with poor immunity</option>
+  </select>
+
+  <div  *ngIf="patients.length !== 0" align="center" style="overflow-y: scroll; margin-top: 2%">
+
+    <table class="table panel" style="width: 90%; margin: auto; margin-top:20px;">
+      <tr class="info">
+        <td scope="col">JMBG</td>
+        <td scope="col">First name</td>
+        <td  scope="col">Last name</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr *ngFor="let p of patients">
+        <td scope="row"><strong>{{p.jmbg}}</strong></td>
+        <td><strong>{{p.firstName}}</strong></td>
+        <td><strong>{{p.lastName}}</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <div align="center" *ngIf="patients.length === 0">
+    <button type="button" style="margin-top: 2%" class="list-group-item list-group-item-success"
+            data-toggle="tooltip">No patients for this filter.
+    </button>
+  </div>
+
+</div>

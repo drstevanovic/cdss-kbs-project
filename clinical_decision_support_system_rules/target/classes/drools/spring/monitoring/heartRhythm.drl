@@ -1,0 +1,16 @@
+import ftn.uns.ac.rs.util.HeartBeatEvent;
+import ftn.uns.ac.rs.domain.entity.Patient;
+
+
+rule "Ubrzan srcani ritam"
+    when
+   	 	Patient($id:id)
+    
+       Number(intValue >= 25) from accumulate(
+            $event: HeartBeatEvent($id == patientId) 
+            over window:time(10s),
+            count($event)
+        )
+    then
+    	drools.halt();
+end

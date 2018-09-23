@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kmodule xmlns="http://jboss.org/kie/6.0.0/kmodule"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <kbase default="true" name="rules" packages="drools.spring.rules">
+        <ksession default="true" name="ksession-rules"/>
+    </kbase>
+    <kbase name="monitoringConfig" eventProcessingMode="stream" packages="drools.spring.monitoring">
+        <ksession name="monitoringConfigPseudo" clockType="pseudo"/>
+    </kbase>
+</kmodule>
